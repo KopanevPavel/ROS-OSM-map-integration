@@ -296,6 +296,14 @@ map.on('click', function(e) {
 									indicator = true;
 								}
 
+								var pathMsg = new ROSLIB.Message({
+									latitude : latResponse,
+									longitude : lonResponse 
+								});
+
+								publisherPath.publish(pathMsg);
+
+
 								// console.log(polylinePoints);
 								
 								// if (indicator){
