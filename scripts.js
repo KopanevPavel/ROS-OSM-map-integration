@@ -277,13 +277,32 @@ map.on('click', function(e) {
 							var latResponse = response.latitude;
 							var lonResponse = response.longitude;
 
+							var active_polyline = L.featureGroup().addTo(map);
+
+							//TODO: add removing old paths
+
 							if (statusResponse)
 							{
 								path_ = [];
-								path_.push([latResponse, lonResponse]);
-								console.log('Path :' + path_);
 
-								polyline_ = L.polyline(path_, {color: 'red'}, {weight: 1}).addTo(map);
+								var polyline = new L.Polyline([], {color: 'red'}, {weight: 1}).addTo(map);
+								var polylinePoints = [];
+								var indicator = false;
+
+								for (var i = 0; i < response.num_wpts; i++)
+								{
+									polylinePoints.push([latResponse[i], lonResponse[i]]);
+									polyline.addLatLng(L.latLng(latResponse[i], lonResponse[i]));
+									indicator = true;
+								}
+
+								// console.log(polylinePoints);
+								
+								// if (indicator){
+									// map.setView(polyline, zoomLevel);
+								// }
+
+								//polyline_ = L.polyline(path_, {color: 'red'}, {weight: 1}).addTo(map);
 							}
 							
 						});
