@@ -66,6 +66,11 @@ function mapInit() {
 	}); 
 	osm.addTo(map);
 
+	let polylineMeasure = L.control.polylineMeasure ({
+		position:'topleft', unit:'metres', showBearings:false, 
+		clearMeasurementsOnStop: false, showClearControl: true})
+	polylineMeasure.addTo (map);
+
 	L.easyButton('glyphicon-road', function(btn, map){
 		swal({
 			title: "Where do you want to go ?",
@@ -203,6 +208,15 @@ paramEndLat.set(0);
 paramEndLon.set(0);
 paramEndGoTo.set(false);
 
+var publisherPath = new ROSLIB.Topic({
+	ros : ros,
+	name : '/routing_machine/global_waypoints',
+	messageType : 'routing_machine/OutputCoords'
+});
+
+var path_ = [];
+var polyline_;
+
 //===> Init the map and the click listener
 
 mapInit();
@@ -254,9 +268,24 @@ map.on('click', function(e) {
 						});
 				
 						console.log("Calling the service");
-						getWpts.callService(request, function(response) {
+						getWpts.callService(request, function(response) 
+						{
 							console.log('Result for service call on '
-										+ getWpts.name + response.num_wpts);
+										+ getWpts.name + ': ' + response.num_wpts +' waypoints');
+							
+							var statusResponse = response.success;
+							var latResponse = response.latitude;
+							var lonResponse = response.longitude;
+
+							if (statusResponse)
+							{
+								path_ = [];
+								path_.push([latResponse, lonResponse]);
+								console.log('Path :' + path_);
+
+								polyline_ = L.polyline(path_, {color: 'red'}, {weight: 1}).addTo(map);
+							}
+							
 						});
 						
 
