@@ -241,6 +241,25 @@ map.on('click', function(e) {
 						paramEndLat.set(lat);
 						paramEndLon.set(lon);
 						paramEndGoTo.set(true);// goTo is set to true, that means that their is a new destination to consider.
+
+						var getWpts = new ROSLIB.Service({
+							ros: ros,
+							name: '/routing_machine/get_wpts',
+							serviceType: 'routing_machine/ParseWpts'
+						});
+
+						console.log("Creating the service request");
+						var request = new ROSLIB.ServiceRequest({
+							get_wpts: true
+						});
+				
+						console.log("Calling the service");
+						getWpts.callService(request, function(response) {
+							console.log('Result for service call on '
+										+ getWpts.name + response.num_wpts);
+						});
+						
+
 					}
 					else
 					{
