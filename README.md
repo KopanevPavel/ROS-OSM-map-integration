@@ -41,3 +41,7 @@ In the lab, we're working with two differents GPS, which are not publishing on t
 - `/panel/nb_cycles` for the number of cycles between each refreshing. Example : `20`
 
 You can set those in a ROS launch file, or set it using `rosparam set`, then refreshing the page in the browser by clicking on the refresh button.
+
+## NOTE!
+
+Source your bash folder before launching rosbridge_websocket. Otherwise it will not be able to register custom services. 
