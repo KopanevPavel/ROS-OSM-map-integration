@@ -201,6 +201,10 @@ var paramEndGoTo = new ROSLIB.Param({
 	ros : ros,
 	name : '/routing_machine/destination/goTo'
 });
+var paramServerType = new ROSLIB.Param({
+	ros : ros,
+	name : '/routing_machine/server_type'
+});
 
 paramStartLat.set(0);
 paramStartLon.set(0);	
@@ -245,77 +249,140 @@ map.on('click', function(e) {
 			function(isConfirm){
 				if (isConfirm)
 				{
+						var server_type = 'server';
 						//Logging stuff in the console
 						console.log('Routing Start !');
 						console.log('Start set to : '+ currentPosition.latitude + ' ' + currentPosition.longitude);
 						console.log('Destination set to : '+lat + ' ' + lon);
-						//Set all the parameters to the destination
+						paramServerType.get(function(value) {
+							console.log('Server type : '+value); // local or server (remote)
+							server_type = value;
+						});
+
+						// Set all the parameters to the destination
 						paramStartLat.set(currentPosition.latitude);
 						paramStartLon.set(currentPosition.longitude);
 						paramEndLat.set(lat);
 						paramEndLon.set(lon);
 						paramEndGoTo.set(true);// goTo is set to true, that means that their is a new destination to consider.
 
-						var getWpts = new ROSLIB.Service({
-							ros: ros,
-							name: '/routing_machine/get_wpts',
-							serviceType: 'routing_machine/ParseWpts'
-						});
+						// Remote server
+						if (server_type == 'server') {
+							var getWpts = new ROSLIB.Service({
+								ros: ros,
+								name: '/routing_machine/get_wpts',
+								serviceType: 'routing_machine/ParseWptsService'
+							});
 
-						console.log("Creating the service request");
-						var request = new ROSLIB.ServiceRequest({
-							get_wpts: true
-						});
-				
-						console.log("Calling the service");
-						getWpts.callService(request, function(response) 
-						{
-							console.log('Result for service call on '
-										+ getWpts.name + ': ' + response.num_wpts +' waypoints');
-							
-							var statusResponse = response.success;
-							var latResponse = response.latitude;
-							var lonResponse = response.longitude;
+							console.log("Creating the service request");
+							var request = new ROSLIB.ServiceRequest({
+								get_wpts: true
+							});
 
-							var active_polyline = L.featureGroup().addTo(map);
+							console.log("Calling the service");
+							getWpts.callService(request, function (response) {
+								console.log('Result for service call on '
+									+ getWpts.name + ' (remote OSRM backend): ' + response.num_wpts + ' waypoints');
 
-							//TODO: add removing old paths
+								var statusResponse = response.success;
+								var latResponse = response.latitude;
+								var lonResponse = response.longitude;
 
-							if (statusResponse)
-							{
-								path_ = [];
+								var active_polyline = L.featureGroup().addTo(map);
 
-								var polyline = new L.Polyline([], {color: 'red'}, {weight: 1}).addTo(map);
-								var polylinePoints = [];
-								var indicator = false;
+								//TODO: add removing old paths
 
-								for (var i = 0; i < response.num_wpts; i++)
-								{
-									polylinePoints.push([latResponse[i], lonResponse[i]]);
-									polyline.addLatLng(L.latLng(latResponse[i], lonResponse[i]));
-									indicator = true;
+								if (statusResponse) {
+									path_ = [];
+
+									var polyline = new L.Polyline([], {color: 'red'}, {weight: 1}).addTo(map);
+									var polylinePoints = [];
+									var indicator = false;
+
+									for (var i = 0; i < response.num_wpts; i++) {
+										polylinePoints.push([latResponse[i], lonResponse[i]]);
+										polyline.addLatLng(L.latLng(latResponse[i], lonResponse[i]));
+										indicator = true;
+									}
+
+									var pathMsg = new ROSLIB.Message({
+										latitude: latResponse,
+										longitude: lonResponse
+									});
+
+									publisherPath.publish(pathMsg);
+									// console.log(polylinePoints);
+
+									// if (indicator){
+									// map.setView(polyline, zoomLevel);
+									// }
+
+									//polyline_ = L.polyline(path_, {color: 'red'}, {weight: 1}).addTo(map);
 								}
 
-								var pathMsg = new ROSLIB.Message({
-									latitude : latResponse,
-									longitude : lonResponse 
-								});
+							});
+						}
+						// Local server
+						else if (server_type == 'local') {
+							var getWptsLocal = new ROSLIB.Service({
+								ros: ros,
+								name: '/routing_machine/get_wpts_local',
+								serviceType: 'routing_machine/RouteService'
+							});
 
-								publisherPath.publish(pathMsg);
+							var poseCurrent = new ROSLIB.Message({
+								position : {
+									x : currentPosition.latitude,
+									y : currentPosition.longitude,
+									z : 0.0
+								},
+								orientation : {
+									x : 0.0,
+									y : 0.0,
+									z : 0.0,
+									w : 1.0
+								}
+							});
 
+							var poseGoal = new ROSLIB.Message({
+								position : {
+									x : lat,
+									y : lon,
+									z : 0.0
+								},
+								orientation : {
+									x : 0.0,
+									y : 0.0,
+									z : 0.0,
+									w : 1.0
+								}
+							});
 
-								// console.log(polylinePoints);
-								
-								// if (indicator){
-									// map.setView(polyline, zoomLevel);
-								// }
+							var requestLocal = new ROSLIB.ServiceRequest({
+								get_wpts : true,
+								waypoints : [poseCurrent, poseGoal],
+								// radiuses :,
+								// bearings :,
+								// approaches :,
+								// exclude :,
+								steps : true,
+								// continue_straight :,
+								// annotation :,
+								// overview :,
+								number_of_alternatives : 1
+							});
 
-								//polyline_ = L.polyline(path_, {color: 'red'}, {weight: 1}).addTo(map);
-							}
-							
-						});
-						
+							getWptsLocal.callService(requestLocal, function(response)
+							{
+								console.log('Result for service call on '
+									+ getWptsLocal.name + ' (local OSRM backend)');
 
+								console.log('Routes: ', + response.routes);
+							});
+						}
+						else {
+							console.log('WRONG SERVER TYPE!');
+						}
 					}
 					else
 					{
