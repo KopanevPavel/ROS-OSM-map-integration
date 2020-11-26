@@ -45,3 +45,12 @@ You can set those in a ROS launch file, or set it using `rosparam set`, then ref
 ## NOTE!
 
 Source your bash folder before launching rosbridge_websocket. Otherwise it will not be able to register custom services. 
+
+## How to use
+
+You can use this frontend with this module https://github.com/KopanevPavel/runbot_Routing_ROS_Module.
+
+Averall structure:
+ - Import the points (current and destination)
+ - Calculate all routes between the points (using OSRM backend (local and remote options are implemented))
+ - Extract the route geometry from the routes and plot them (using Leaflet)
