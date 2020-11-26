@@ -380,17 +380,29 @@ map.on('click', function(e) {
 									+ getWptsLocal.name + ' (local OSRM backend)');
 
 								var statusResponseLocal = response.success;
-								var latResponseLocal = [];
-								var lonResponseLocal = [];
 
 								for (var route in response.routes) {
 									console.log(response.routes[route].coordinates);
+
+									var latResponseLocal = [];
+									var lonResponseLocal = [];
+									var utmCoords = [];
 
 									for (var coordinate in response.routes[route].coordinates) {
 										latResponseLocal.push(response.routes[route].coordinates[coordinate].y);
 										lonResponseLocal.push(response.routes[route].coordinates[coordinate].x);
 										var ll = L.latLng(response.routes[route].coordinates[coordinate].y, response.routes[route].coordinates[coordinate].x);
 										var utm = ll.utm();
+										// console.log(utm);
+										var utmCoord = new ROSLIB.Message({
+											x : utm.x,
+											y : utm.y,
+											zone : utm.zone,
+											band : utm.band,
+											southHemi : utm.southHemi
+										});
+
+										utmCoords.push(utmCoord);
 									}
 
 									if (statusResponseLocal) {
@@ -406,7 +418,8 @@ map.on('click', function(e) {
 
 										var pathMsg = new ROSLIB.Message({
 											latitude: latResponseLocal,
-											longitude: lonResponseLocal
+											longitude: lonResponseLocal,
+											utm_coordinates: utmCoords,
 										});
 
 										publisherPath.publish(pathMsg);
