@@ -370,7 +370,7 @@ map.on('click', function(e) {
 								// continue_straight :,
 								// annotation :,
 								// overview :,
-								number_of_alternatives : 1
+								number_of_alternatives : 0
 							});
 
 							console.log("Calling the service (local OSRM backend)");
@@ -389,6 +389,8 @@ map.on('click', function(e) {
 									for (var coordinate in response.routes[route].coordinates) {
 										latResponseLocal.push(response.routes[route].coordinates[coordinate].y);
 										lonResponseLocal.push(response.routes[route].coordinates[coordinate].x);
+										var ll = L.latLng(response.routes[route].coordinates[coordinate].y, response.routes[route].coordinates[coordinate].x);
+										var utm = ll.utm();
 									}
 
 									if (statusResponseLocal) {

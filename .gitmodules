@@ -1,0 +1,3 @@
+[submodule "lib/Leaflet.UTM"]
+	path = lib/Leaflet.UTM
+	url = https://github.com/jjimenezshaw/Leaflet.UTM
