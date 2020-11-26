@@ -267,19 +267,19 @@ map.on('click', function(e) {
 						paramEndGoTo.set(true);// goTo is set to true, that means that their is a new destination to consider.
 
 						// Remote server
-						if (server_type == 'server') {
+						// if (server_type == 'server') {
 							var getWpts = new ROSLIB.Service({
 								ros: ros,
 								name: '/routing_machine/get_wpts',
 								serviceType: 'routing_machine/ParseWptsService'
 							});
 
-							console.log("Creating the service request");
+							console.log("Creating the service request (remote OSRM backend)");
 							var request = new ROSLIB.ServiceRequest({
 								get_wpts: true
 							});
 
-							console.log("Calling the service");
+							console.log("Calling the service (remote OSRM backend)");
 							getWpts.callService(request, function (response) {
 								console.log('Result for service call on '
 									+ getWpts.name + ' (remote OSRM backend): ' + response.num_wpts + ' waypoints');
@@ -321,9 +321,9 @@ map.on('click', function(e) {
 								}
 
 							});
-						}
+						// }
 						// Local server
-						else if (server_type == 'local') {
+						// else if (server_type == 'local') {
 							var getWptsLocal = new ROSLIB.Service({
 								ros: ros,
 								name: '/routing_machine/get_wpts_local',
@@ -332,8 +332,8 @@ map.on('click', function(e) {
 
 							var poseCurrent = new ROSLIB.Message({
 								position : {
-									x : currentPosition.latitude,
-									y : currentPosition.longitude,
+									y : currentPosition.latitude,
+									x : currentPosition.longitude,
 									z : 0.0
 								},
 								orientation : {
@@ -346,8 +346,8 @@ map.on('click', function(e) {
 
 							var poseGoal = new ROSLIB.Message({
 								position : {
-									x : lat,
-									y : lon,
+									y : lat,
+									x : lon,
 									z : 0.0
 								},
 								orientation : {
@@ -358,6 +358,7 @@ map.on('click', function(e) {
 								}
 							});
 
+							console.log("Creating the service request (local OSRM backend)");
 							var requestLocal = new ROSLIB.ServiceRequest({
 								get_wpts : true,
 								waypoints : [poseCurrent, poseGoal],
@@ -372,17 +373,48 @@ map.on('click', function(e) {
 								number_of_alternatives : 1
 							});
 
+							console.log("Calling the service (local OSRM backend)");
 							getWptsLocal.callService(requestLocal, function(response)
 							{
 								console.log('Result for service call on '
 									+ getWptsLocal.name + ' (local OSRM backend)');
 
-								console.log('Routes: ', + response.routes);
+								var statusResponseLocal = response.success;
+								var latResponseLocal = [];
+								var lonResponseLocal = [];
+
+								for (var route in response.routes) {
+									console.log(response.routes[route].coordinates);
+
+									for (var coordinate in response.routes[route].coordinates) {
+										latResponseLocal.push(response.routes[route].coordinates[coordinate].y);
+										lonResponseLocal.push(response.routes[route].coordinates[coordinate].x);
+									}
+
+									if (statusResponseLocal) {
+										path_ = [];
+
+										var polyline = new L.Polyline([], {color: 'red'}, {weight: 1}).addTo(map);
+										var indicator = false;
+
+										for (var coordinate in response.routes[route].coordinates) {
+											polyline.addLatLng(L.latLng(response.routes[route].coordinates[coordinate].y, response.routes[route].coordinates[coordinate].x));
+											indicator = true;
+										}
+
+										var pathMsg = new ROSLIB.Message({
+											latitude: latResponseLocal,
+											longitude: lonResponseLocal
+										});
+
+										publisherPath.publish(pathMsg);
+									}
+								}
 							});
-						}
-						else {
-							console.log('WRONG SERVER TYPE!');
-						}
+						// }
+						// else {
+						// 	console.log('WRONG SERVER TYPE!');
+						// }
 					}
 					else
 					{
