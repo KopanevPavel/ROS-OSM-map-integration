@@ -183,27 +183,27 @@ ros.on('close', function() {
 //===> Init the routing parameters
 var paramStartLat = new ROSLIB.Param({
 	ros : ros,
-	name : '/routing_machine/start/latitude'
+	name : '/runbot_routing_machine/start/latitude'
 });
 var paramStartLon = new ROSLIB.Param({
 	ros : ros,
-	name : '/routing_machine/start/longitude'
+	name : '/runbot_routing_machine/start/longitude'
 });
 var paramEndLat = new ROSLIB.Param({
 	ros : ros,
-	name : '/routing_machine/destination/latitude'
+	name : '/runbot_routing_machine/destination/latitude'
 });
 var paramEndLon = new ROSLIB.Param({
 	ros : ros,
-	name : '/routing_machine/destination/longitude'
+	name : '/runbot_routing_machine/destination/longitude'
 });
 var paramEndGoTo = new ROSLIB.Param({
 	ros : ros,
-	name : '/routing_machine/destination/goTo'
+	name : '/runbot_routing_machine/destination/goTo'
 });
 var paramServerType = new ROSLIB.Param({
 	ros : ros,
-	name : '/routing_machine/server_type'
+	name : '/runbot_routing_machine/server_type'
 });
 
 paramStartLat.set(0);
@@ -214,8 +214,8 @@ paramEndGoTo.set(false);
 
 var publisherPath = new ROSLIB.Topic({
 	ros : ros,
-	name : '/routing_machine/global_waypoints',
-	messageType : 'routing_machine/OutputCoords'
+	name : '/runbot_routing_machine/global_waypoints',
+	messageType : 'runbot_routing_machine/OutputCoords'
 });
 
 var path_ = [];
@@ -270,8 +270,8 @@ map.on('click', function(e) {
 						// if (server_type == 'server') {
 							var getWpts = new ROSLIB.Service({
 								ros: ros,
-								name: '/routing_machine/get_wpts',
-								serviceType: 'routing_machine/ParseWptsService'
+								name: '/runbot_routing_machine/get_wpts',
+								serviceType: 'runbot_routing_machine/ParseWptsService'
 							});
 
 							console.log("Creating the service request (remote OSRM backend)");
@@ -326,8 +326,8 @@ map.on('click', function(e) {
 						// else if (server_type == 'local') {
 							var getWptsLocal = new ROSLIB.Service({
 								ros: ros,
-								name: '/routing_machine/get_wpts_local',
-								serviceType: 'routing_machine/RouteService'
+								name: '/runbot_routing_machine/get_wpts_local',
+								serviceType: 'runbot_routing_machine/RouteService'
 							});
 
 							var poseCurrent = new ROSLIB.Message({
